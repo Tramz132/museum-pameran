@@ -52,10 +52,10 @@ class LoanRequestVerificationController extends Controller
             'status' => $validated['status'],
             'approved_by' => auth()->id(),
             'approved_at' => Carbon::now(),
-            'catatan' => $validated['catatan'],
+            'catatan' => $validated['catatan']?? null,
         ]);
 
-        $message = $validated['status'] === 'Approved' 
+        $message = $validated['status'] === 'Approved'
             ? 'Pengajuan peminjaman berhasil disetujui. Status barang kini menjadi Dipinjam.'
             : 'Pengajuan peminjaman berhasil ditolak.';
 

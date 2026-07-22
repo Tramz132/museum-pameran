@@ -22,24 +22,14 @@ use App\Http\Controllers\Panitia\LoanRequestController as PanitiaLoanRequestCont
 |--------------------------------------------------------------------------
 */
 
-// Halaman utama otomatis diarahkan sesuai status login & role
+// Halaman utama otomatis diarahkan ke frontend login yang baru
 Route::get('/', function () {
-    if (!Auth::check()) {
-        return redirect()->route('login');
-    }
-
-    $user = Auth::user();
-    return match ($user->role) {
-        'admin' => redirect()->route('admin.dashboard'),
-        'staff' => redirect()->route('staff.dashboard'),
-        'panitia' => redirect()->route('panitia.dashboard'),
-        default => redirect()->route('login'),
-    };
+    return redirect('/frontend/login.html');
 });
 
 Route::get('/dashboard', function () {
-    return redirect('/');
-})->middleware(['auth'])->name('dashboard');
+    return redirect('/frontend/login.html');
+});
 
 // ==========================================
 // 1. FITUR ADMIN (Role: admin)

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Peminjaman Saya - MUSEUMEXPO</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex">
+
+    <!-- Sidebar Container -->
+    <div id="sidebar-container" class="w-64 bg-slate-900 text-white min-h-screen flex-shrink-0 hidden md:block"></div>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow flex flex-col min-h-screen">
+        <!-- Top Navbar -->
+        <div id="navbar-container"></div>
+
+        <!-- Inner Content -->
+        <main class="p-6 md:p-8 flex-grow">
+            <!-- Header section -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Riwayat Peminjaman Saya</h1>
+                <p class="text-sm text-slate-400 mt-1 font-medium">Pantau status persetujuan pengajuan peminjaman barang pameran Anda.</p>
+            </div>
+
+            <!-- Table Card -->
+            <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto w-full">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <th class="py-4 px-6">Barang Koleksi</th>
+                                <th class="py-4 px-6">Detail Acara</th>
+                                <th class="py-4 px-6">Masa Peminjaman</th>
+                                <th class="py-4 px-6 text-center">Status</th>
+                                <th class="py-4 px-6">Catatan Staf</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loans-tbody" class="divide-y divide-slate-100 text-xs font-semibold text-slate-600">
+                            <!-- Skeletons or data load here -->
+                            <tr>
+                                <td colspan="5" class="py-12 text-center text-slate-400">Loading data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Container -->
+                <div class="flex justify-between items-center bg-slate-50/20 border-t border-slate-100 px-6 py-4" id="pagination-container">
+                    <!-- Dynamic Pagination -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts Configuration -->
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        requireAuth(['panitia']);
+        injectLayout();
+
+        async function fetchLoans(page = 1) {
+            const tbody = document.getElementById('loans-tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="py-8 text-center text-slate-400 animate-pulse">Memuat riwayat peminjaman...</td>
+                </tr>
+            `;
+
+            try {
+                const response = await apiFetch(`/panitia/loan-requests?page=${page}`);
+                if (!response) return;
+
+                const data = await response.json();
+                renderLoans(data.data);
+                renderPagination(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function renderLoans(loans) {
+            const tbody = document.getElementById('loans-tbody');
+            if (loans.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-slate-400">
+                            <span class="text-3xl">📋</span>
+                            <h4 class="text-sm font-bold text-slate-600 mt-2">Belum Ada Pengajuan</h4>
+                            <p class="text-xs text-slate-450 mt-1">Anda belum mengajukan peminjaman barang pameran apapun.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = loans.map(loan => {
+                const badgeColor = loan.status === 'Approved' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                                   loan.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                                   'bg-amber-50 text-amber-700 border border-amber-100';
+
+                const museumItem = loan.museum_item;
+                const itemCode = museumItem ? `<span class="text-[10px] text-slate-400 block">${museumItem.kode_barang}</span>` : '';
+                const itemName = museumItem ? museumItem.nama_barang : 'Barang Terhapus';
+
+                const notes = loan.catatan ? loan.catatan : '<span class="text-slate-400 italic font-medium">-</span>';
+
+                // Date Formatting Helper
+                const dateMulai = new Date(loan.tanggal_mulai).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+                const dateSelesai = new Date(loan.tanggal_selesai).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+
+                return `
+                    <tr class="hover:bg-slate-50/50 transition-all duration-200">
+                        <td class="py-5 px-6">
+                            ${itemCode}
+                            <span class="font-bold text-slate-800 text-sm">${itemName}</span>
+                        </td>
+                        <td class="py-5 px-6">
+                            <span class="font-bold text-slate-700">${loan.nama_acara}</span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">Lokasi: ${loan.lokasi}</span>
+                        </td>
+                        <td class="py-5 px-6">
+                            <span class="text-slate-700">${dateMulai} s/d</span>
+                            <span class="text-slate-700 block">${dateSelesai}</span>
+                        </td>
+                        <td class="py-5 px-6 text-center">
+                            <span class="text-[10px] font-bold px-3 py-1.5 rounded-full ${badgeColor}">${loan.status}</span>
+                        </td>
+                        <td class="py-5 px-6">
+                            <div class="max-w-xs text-xs text-slate-600 leading-normal">
+                                ${notes}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderPagination(data) {
+            const container = document.getElementById('pagination-container');
+            const total = data.total;
+            const from = data.from || 0;
+            const to = data.to || 0;
+            const currentPage = data.current_page;
+            const lastPage = data.last_page;
+
+            let prevBtn = `<button disabled class="px-4 py-2 bg-slate-100 text-slate-450 rounded-xl text-xs font-bold cursor-not-allowed">Sebelumnya</button>`;
+            if (currentPage > 1) {
+                prevBtn = `<button onclick="fetchLoans(${currentPage - 1})" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200">Sebelumnya</button>`;
+            }
+
+            let nextBtn = `<button disabled class="px-4 py-2 bg-slate-100 text-slate-450 rounded-xl text-xs font-bold cursor-not-allowed">Selanjutnya</button>`;
+            if (currentPage < lastPage) {
+                nextBtn = `<button onclick="fetchLoans(${currentPage + 1})" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200">Selanjutnya</button>`;
+            }
+
+            container.innerHTML = `
+                <span class="text-xs font-semibold text-slate-400">Menampilkan ${from}-${to} dari ${total} pengajuan</span>
+                <div class="flex gap-2">
+                    ${prevBtn}
+                    ${nextBtn}
+                </div>
+            `;
+        }
+
+        // Initial Load
+        fetchLoans(1);
+    </script>
+</body>
+</html>

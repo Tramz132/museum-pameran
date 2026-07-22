@@ -17,6 +17,9 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!Auth::check()) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
             return redirect()->route('login');
         }
 
@@ -24,6 +27,11 @@ class RoleMiddleware
 
         if (in_array($user->role, $roles)) {
             return $next($request);
+        }
+
+        // Jika request API / mengharapkan JSON, kembalikan respons 403
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Forbidden. Akses ditolak karena perbedaan peran.'], 403);
         }
 
         // Redirect ke dashboard masing-masing jika role tidak sesuai

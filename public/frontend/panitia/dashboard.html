@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Panitia - MUSEUMEXPO</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex">
+
+    <!-- Left Sidebar (Injected dynamically) -->
+    <div id="sidebar-container" class="w-64 bg-slate-900 text-white min-h-screen flex-shrink-0 hidden md:block"></div>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow flex flex-col min-h-screen">
+        <!-- Top Navbar (Injected dynamically) -->
+        <div id="navbar-container"></div>
+
+        <!-- Inner Content -->
+        <main class="p-6 md:p-8 flex-grow">
+            <!-- Welcome Header -->
+            <div class="mb-8">
+                <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight" id="welcome-name">Selamat Datang, Panitia!</h1>
+                <p class="text-sm text-slate-400 mt-1 font-medium">Ini adalah ringkasan aktivitas peminjaman barang pameran Anda.</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="stats-grid">
+                <!-- Skeleton Card 1 -->
+                <div class="animate-pulse bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between">
+                    <div class="space-y-3">
+                        <div class="h-4 bg-slate-200 rounded w-20"></div>
+                        <div class="h-8 bg-slate-200 rounded w-12"></div>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-200 rounded-full"></div>
+                </div>
+                <!-- Skeleton Card 2 -->
+                <div class="animate-pulse bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between">
+                    <div class="space-y-3">
+                        <div class="h-4 bg-slate-200 rounded w-20"></div>
+                        <div class="h-8 bg-slate-200 rounded w-12"></div>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-200 rounded-full"></div>
+                </div>
+                <!-- Skeleton Card 3 -->
+                <div class="animate-pulse bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between">
+                    <div class="space-y-3">
+                        <div class="h-4 bg-slate-200 rounded w-20"></div>
+                        <div class="h-8 bg-slate-200 rounded w-12"></div>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-200 rounded-full"></div>
+                </div>
+                <!-- Skeleton Card 4 -->
+                <div class="animate-pulse bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between">
+                    <div class="space-y-3">
+                        <div class="h-4 bg-slate-200 rounded w-20"></div>
+                        <div class="h-8 bg-slate-200 rounded w-12"></div>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-200 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Dashboard Welcome Panel -->
+            <div class="bg-white border border-slate-100 rounded-3xl p-6 md:p-8 shadow-sm">
+                <div class="max-w-2xl">
+                    <h3 class="text-xl font-bold text-slate-800">Petunjuk Pengajuan Pameran Eksternal</h3>
+                    <p class="text-slate-500 text-sm mt-3 leading-relaxed">
+                        Anda dapat menjelajahi dan mencari barang koleksi museum yang berstatus <strong>Tersedia</strong> pada menu <strong>Katalog Barang</strong>. Silakan ajukan peminjaman dengan mengisi detail lokasi acara serta durasi tanggal pameran. 
+                    </p>
+                    <p class="text-slate-500 text-sm mt-3 leading-relaxed">
+                        Pengajuan Anda akan divalidasi oleh **Staf Kurator**. Anda dapat memantau status persetujuan, penolakan, beserta catatan kurator secara langsung melalui menu <strong>Riwayat Peminjaman</strong>.
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <a href="catalog.html" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-lg shadow-blue-600/10 hover:shadow-blue-600/20 transition-all duration-200">
+                            Lihat Katalog Barang
+                        </a>
+                        <a href="loans.html" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-all duration-200">
+                            Lihat Riwayat Saya
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts Configuration & Auth Check -->
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        // Pastikan login & role sesuai
+        requireAuth(['panitia']);
+        injectLayout();
+
+        // Tampilkan nama di welcome header
+        const user = checkAuth();
+        if (user) {
+            document.getElementById('welcome-name').textContent = `Selamat Datang, ${user.name}!`;
+        }
+
+        // Fetch Data Dashboard dari API
+        async function fetchDashboardStats() {
+            try {
+                const response = await apiFetch('/panitia/dashboard');
+                if (!response) return;
+
+                const stats = await response.json();
+                
+                // Inject Stats HTML
+                document.getElementById('stats-grid').innerHTML = `
+                    <!-- Card 1 -->
+                    <div class="bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between shadow-sm">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Koleksi</p>
+                            <h3 class="text-2xl font-black text-slate-800 mt-2">${stats.total_items}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
+                            📦
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between shadow-sm">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Koleksi Tersedia</p>
+                            <h3 class="text-2xl font-black text-emerald-600 mt-2">${stats.available_items}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center font-bold text-lg">
+                            ✅
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between shadow-sm">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pengajuan Saya</p>
+                            <h3 class="text-2xl font-black text-slate-800 mt-2">${stats.my_requests}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center font-bold text-lg">
+                            📋
+                        </div>
+                    </div>
+                    <!-- Card 4 -->
+                    <div class="bg-white border border-slate-100 p-6 rounded-2xl flex items-center justify-between shadow-sm">
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Disetujui (Approved)</p>
+                            <h3 class="text-2xl font-black text-blue-600 mt-2">${stats.my_approved_requests}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
+                            🚚
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Fetch Stats Failed:', error);
+            }
+        }
+
+        fetchDashboardStats();
+    </script>
+</body>
+</html>
